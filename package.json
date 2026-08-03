@@ -16,7 +16,7 @@
     {
       "displayName":"Demo",
       "description":"Demo Sample!",
-      "path":"Samples/Demo"
+      "path":"Samples~/Demo"
     }
   ],
   "dependencies": {
