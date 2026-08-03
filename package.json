@@ -12,5 +12,7 @@
     "rig",
     "editor"
   ],
-  "dependencies": {}
+  "dependencies": {
+    "com.unity.2d.animation": "9.1.0"
+  }
 }

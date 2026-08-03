@@ -1,0 +1,20 @@
+{
+  "name": "CRboxman.SpriteSkinRebinder.Editor",
+  "rootNamespace": "",
+  "references": [
+    "CRboxman.SpriteSkinRebinder",
+    "Unity.2D.Animation.Runtime",
+    "Unity.2D.Animation.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
