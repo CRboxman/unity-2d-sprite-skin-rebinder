@@ -12,6 +12,13 @@
     "rig",
     "editor"
   ],
+  "samples":[
+    {
+      "displayName":"Demo",
+      "description":"Demo Sample!",
+      "path":"Samples/Demo"
+    }
+  ],
   "dependencies": {
     "com.unity.2d.animation": "9.1.0"
   }
