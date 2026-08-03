@@ -1,0 +1,241 @@
+2D换装骨骼自动重绑工具 使用说明
+=================================
+
+工具名称
+--------
+2D换装骨骼自动重绑工具
+
+用途一句话
+----------
+用于解决 Unity 2022+ 2D Animation / Sprite Resolver 换装时，Sprite 已经切换了，但 SpriteSkin 的 Bones 列表没有自动跟随当前 Sprite 的骨骼数量和骨骼引用刷新的问题。
+
+适合解决的问题
+--------------
+例如一个头部部件：
+
+1. 第一个 Sprite 只有 1 根骨骼，例如 bone_3。
+2. 第二个 Sprite 有 2 根骨骼，例如 bone_4、bone_5。
+3. 使用 Sprite Resolver 切换 Label 后，SpriteRenderer 的图片切换成功，但 SpriteSkin 的 Bones 仍停留在旧图片的骨骼数量或旧引用。
+4. 结果就是图片变了，但变形骨骼没有正确同步，导致偏移、错位、只更新一部分骨骼等问题。
+
+本工具会根据当前 SpriteRenderer 正在显示的 Sprite，读取这张 Sprite 自己携带的骨骼数据，然后自动刷新 SpriteSkin 的 Root Bone 和 Bones。
+
+文件结构
+--------
+Runtime/SpriteResolverSkinRebinder.cs
+    运行时/编辑器模式都可用的核心组件。
+    挂在带有 SpriteRenderer + SpriteSkin + SpriteResolver 的具体部件对象上。
+
+Editor/SpriteResolverSkinRebinderEditor.cs
+    编辑器辅助工具。
+    提供 Inspector 按钮，以及菜单一键扫描并配置角色子对象。
+
+安装方式
+--------
+把整个文件夹里的 Runtime 和 Editor 文件夹放进 Unity 项目的 Assets 下即可。
+
+推荐放置方式：
+Assets/Scripts/Rendering/SpriteResolverSkinRebinder.cs
+Assets/Scripts/Editor/SpriteResolverSkinRebinderEditor.cs
+
+如果放到别的目录也可以，但 Editor 脚本必须位于名字叫 Editor 的文件夹下，或者任意 Editor 专用程序集下。
+
+基础使用流程
+------------
+推荐流程：
+
+1. 在 Hierarchy 中选中角色根节点。
+   例如 Fei6777，或者包含完整骨架的总父对象。
+
+2. 点击 Unity 顶部菜单：
+   Tools > 2D Animation > Setup Selected Sprite Resolver Skin Rebinders
+
+3. 工具会自动扫描这个角色下面所有同时拥有以下组件的对象：
+   - SpriteRenderer
+   - SpriteSkin
+   - SpriteResolver
+
+4. 对符合条件的对象自动添加 SpriteResolverSkinRebinder。
+
+5. 自动把 Bone Search Root 设置为你选中的角色根节点。
+
+6. 之后在 Inspector 中切换 Sprite Resolver 的 Category / Label，SpriteSkin 的 Bones 会按当前 Sprite 的骨骼自动刷新。
+
+重要要求
+--------
+SpriteResolverSkinRebinder 必须挂在具体换装部件对象上，而不是只挂在角色根节点上。
+
+正确对象通常是：
+Head/head
+LeftArm/left_arm
+Body/body
+
+这些对象上应该同时有：
+- SpriteRenderer
+- SpriteSkin
+- SpriteResolver
+- SpriteResolverSkinRebinder
+
+不要只把脚本挂在 Fei6777 这种角色根节点上，因为根节点通常没有 SpriteRenderer 和 SpriteSkin。
+
+核心字段说明
+------------
+Sprite Skin
+    要刷新的 SpriteSkin。
+    留空时会自动获取当前对象上的 SpriteSkin。
+
+Sprite Resolver
+    换装用的 SpriteResolver。
+    留空时会自动获取当前对象上的 SpriteResolver。
+
+Sprite Renderer
+    当前显示 Sprite 的 SpriteRenderer。
+    留空时会自动获取当前对象上的 SpriteRenderer。
+
+Bone Search Root
+    骨骼搜索根节点。
+    强烈建议设置为角色总根节点，或者包含完整骨架的稳定父节点。
+    不要设置为 bone_3、bone_4、head、left_arm 这种局部骨骼或局部部件节点。
+
+Fallback To Object Root When Incomplete
+    如果当前 Bone Search Root 找不齐当前 Sprite 需要的骨骼，会自动退回当前对象的根节点再找一次。
+    建议开启。
+
+Auto Rebind
+    是否自动刷新 SpriteSkin Bones。
+    建议开启。
+
+Auto Rebind In Edit Mode
+    是否在非运行模式下也自动刷新。
+    本工具主要就是为编辑器换装预览准备的，建议开启。
+
+Watch Sprite Changes
+    是否检测 SpriteRenderer.sprite 变化。
+    SpriteResolver 没有稳定公开的切换事件，所以建议开启。
+
+Keep SpriteSkin Root As Search Root
+    是否让 SpriteSkin.Root Bone 保持为 Bone Search Root。
+    建议开启。
+    这样 Root Bone 会保持为角色根节点，例如 Fei6777，而不会因为切换到某张图后缩成 bone_4 这种局部骨骼。
+
+Missing Bone Policy
+    找不到某根骨骼时的处理方式。
+
+    Keep Current Binding：
+        找不到就不强行改，适合开发期排查问题，推荐默认使用。
+
+    Disable SpriteSkin：
+        找不到骨骼时禁用 SpriteSkin。
+
+    Use Object Transform：
+        找不到的骨骼用当前对象 Transform 兜底，不推荐长期使用，只适合临时看效果。
+
+Match By Path When Name Duplicated
+    当同名骨骼存在多个时，尝试通过路径进一步匹配。
+    建议开启。
+
+Ignore Case
+    骨骼名大小写不敏感匹配。
+    通常关闭即可。
+
+Log Warnings
+    找不到骨骼或绑定失败时输出警告。
+    开发期建议开启。
+
+组件按钮说明
+------------
+Rebind SpriteSkin Now
+    立刻根据当前 SpriteRenderer.sprite 刷新一次 SpriteSkin 的 Root Bone 和 Bones。
+    当你觉得 Inspector 没有马上刷新时，可以点这个按钮手动执行一次。
+
+Use Transform Root As Bone Search Root
+    把 Bone Search Root 设置为当前对象的 Transform Root，并立刻刷新一次。
+    如果你不小心把 Bone Search Root 指到了某个局部 bone，可以用这个按钮快速修正。
+
+顶部菜单说明
+------------
+Tools > 2D Animation > Setup Selected Sprite Resolver Skin Rebinders
+    选中角色根节点后点击。
+    自动给角色下面所有 SpriteRenderer + SpriteSkin + SpriteResolver 对象添加/配置 SpriteResolverSkinRebinder。
+    这是最推荐的一键配置方式。
+
+右键 SpriteLibrary 组件菜单：
+Setup Child SpriteSkin Rebinders
+    在 SpriteLibrary 组件的右键菜单里执行。
+    会以 SpriteLibrary 所在对象为根节点，配置其子对象里的可换装 SpriteSkin 部件。
+
+刷新小提示
+----------
+Unity Inspector 有时刷新比较懒。
+当前脚本已经做了编辑器模式自动检测、延迟刷新和 SerializedObject 写入，但某些情况下 Inspector 仍可能需要 Scene 视图/Inspector 触发一次重绘。
+
+如果你切换 Sprite Resolver 的 Label 后，Bones 实际已经更新，但 Inspector 看起来慢半拍，可以：
+
+1. 鼠标移动到 Scene 视图上。
+2. 或者点一下其他对象再点回来。
+3. 或者直接点击组件里的 Rebind SpriteSkin Now。
+
+这不是骨骼匹配逻辑失败，而是 Unity Inspector 显示刷新问题。
+
+推荐的美术/骨骼规范
+------------------
+最稳的方式是使用“共享骨架”或“超集骨架”。
+
+例如普通帽子只需要 head，一种特殊头盔需要 head + visor。
+那么角色骨架里最好一直保留 head 和 visor，只是普通帽子不用 visor。
+这样所有 Sprite 都能在同一个稳定骨架下找到自己的骨骼。
+
+如果某个装备需要完全不同的一套骨架，例如机械臂、独立翅膀、带复杂摆动的外部装置，则不建议强行塞进同一个 SpriteResolver 部件里。
+更推荐做成独立装备 prefab，自己带 SpriteSkin / Animator / 骨架，然后挂到角色挂点上。
+
+适用场景
+--------
+适合：
+- Unity 2D Animation 换装。
+- SpriteResolver 切换 SpriteLibrary 中不同 Label。
+- 不同 Sprite 的骨骼数量不同，但骨骼对象已经存在于角色骨架层级里。
+- 希望编辑器模式切换 Label 后自动刷新 SpriteSkin Bones。
+- 希望减少新版 Unity 中手动重新绑定 Bones 的操作。
+
+不适合：
+- 当前 Sprite 需要的骨骼在场景角色骨架中根本不存在。
+- 每个装备都有完全独立且差异很大的骨架结构。
+- 想让工具凭空根据 Sprite 自动创建并摆放骨骼。
+
+常见问题
+--------
+Q：它是根据骨骼名字找的吗？
+A：优先根据 Unity 2D Animation 的 Bone guid 匹配。名字和路径只是兜底。因此比纯名字匹配稳定。
+
+Q：我改了骨骼名字会不会坏？
+A：如果 Bone guid 没变，通常仍然能匹配。如果 guid 也变了，就只能依赖名字/路径兜底。
+
+Q：为什么必须设置 Bone Search Root？
+A：因为工具需要知道去哪里找当前 Sprite 需要的骨骼。这个根节点应该包含所有可换装部件可能用到的骨骼。
+
+Q：为什么不要把 Bone Search Root 设置成 SpriteSkin.rootBone 当前显示的 bone？
+A：因为 SpriteSkin.rootBone 可能会随着切换变成某个局部骨骼，比如 bone_4。之后搜索范围就被缩小，只能找到局部骨骼，导致后面的 Bones 不同步。
+
+Q：运行时脚本切换图片能用吗？
+A：可以。用 SpriteResolver.SetCategoryAndLabel 切换后，组件会检测 SpriteRenderer.sprite 变化并自动 Rebind。也可以在切换后手动调用 RebindNow，更可控。
+
+Q：编辑器模式能用吗？
+A：可以。这就是本工具重点优化的场景。
+
+Q：切换后 Inspector 偶尔要鼠标移到场景上才显示正常，是不是失败？
+A：通常不是失败，是 Inspector 重绘慢。只要 SpriteSkin 的 Bones 实际数量和引用已经正确，就可以认为逻辑成功。
+
+建议工作流
+----------
+1. 美术导入 PSB/PSD 并配置 SpriteLibrary。
+2. 角色场景或 prefab 中保留一套稳定骨架，尽量采用共享/超集骨架。
+3. 每个可换装部件保留一个对象，挂 SpriteRenderer + SpriteSkin + SpriteResolver。
+4. 选中角色根节点，执行 Tools > 2D Animation > Setup Selected Sprite Resolver Skin Rebinders。
+5. 在 Inspector 中切换 SpriteResolver Label，检查 SpriteSkin Bones 是否跟随当前 Sprite 更新。
+6. 如果某个部位有问题，点击 Rebind SpriteSkin Now，并检查 Console 中是否提示缺少骨骼。
+
+版本备注
+--------
+当前工具在 Unity 2022.3 + com.unity.2d.animation 9.x 环境下验证过编译。
+其他版本 Unity 的 SpriteSkin 内部字段或属性如果发生变化，可能需要调整脚本中的反射/SerializedObject 字段名。
+

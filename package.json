@@ -1,0 +1,16 @@
+{
+  "name": "com.crboxman.sprite-skin-rebinder",
+  "displayName": "2D换装骨骼自动重绑工具",
+  "version": "1.0.0",
+  "unity": "2022.3",
+  "description": "Unity 2D Sprite Resolver / Sprite Library 骨骼自动重绑工具，支持批量处理、自动重绑 SpriteSkin Bones 和操作日志。",
+  "keywords": [
+    "unity",
+    "2d",
+    "sprite",
+    "skeleton",
+    "rig",
+    "editor"
+  ],
+  "dependencies": {}
+}
